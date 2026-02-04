@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # 1. DATABASE SERVICES
+  redis:
+    image: redis:alpine
+    container_name: autoscaler-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - autoscaler-net
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: autoscaler-influxdb
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - autoscaler-net
+
+  # 2. DATA PIPELINE SERVICES
+  api:
+    build: ./api
+    container_name: autoscaler-mock-api
+    ports:
+      - "8001:8000" 
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - autoscaler-net
+      
+  ingestor:
+    build: ./ingestion
+    container_name: autoscaler-ingestor
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - INFLUX_URL=http://influxdb:8086
+    depends_on:
+      - redis
+      - influxdb
+    networks:
+      - autoscaler-net
+
+  locust:
+    build: ./locust
+    container_name: autoscaler-locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locust:/mnt/locust
+    networks:
+      - autoscaler-net
+
+  # 3. CORE APP SERVICES
+  backend:
+    # --- ĐÃ SỬA THỤT ĐẦU DÒNG TỪ ĐÂY ---
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: autoscaler-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
+      - INFLUX_URL=http://influxdb:8086
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - influxdb
+    networks:
+      - autoscaler-net
+    volumes:
+      # Sửa lại mount point cho chuẩn: ./backend:/app (thay vì /app/backend)
+      # Vì Dockerfile thường set WORKDIR /app, code nằm ngay trong đó
+      - ./backend:/app
+      # Nếu bạn dùng model riêng thì mount, không thì có thể bỏ dòng dưới nếu chưa cần
+      #- ./ml_model:/app/ml_model
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: autoscaler-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000/ws
+    depends_on:
+      - backend
+    networks:
+      - autoscaler-net
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+networks:
+  autoscaler-net:
+    driver: bridge
+
+volumes:
+  influxdb_data:

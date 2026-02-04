@@ -1,0 +1,11 @@
+{
+    "mae": 32.15,
+    "mse": 2048.67,
+    "rmse": 45.26,
+    "r2": 0.8734,
+    "trained_at": "2026-01-29T15:30:45.123456",
+    "model_version": "1.0",
+    "train_samples": 15420,
+    "test_samples": 3856,
+    "features": 15
+}

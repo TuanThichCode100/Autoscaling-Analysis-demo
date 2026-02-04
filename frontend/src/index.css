@@ -1,0 +1,98 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Color Palette */
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-purple: #8b5cf6;
+  --color-purple-dark: #7c3aed;
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-warning: #f59e0b;
+  --color-warning-dark: #d97706;
+  --color-danger: #ef4444;
+  --color-danger-dark: #dc2626;
+
+  /* Background */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+
+  /* Shadows - Elevation System */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 dark:bg-[#0d1117] dark:text-slate-100 transition-colors duration-300;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for interactive elements */
+button,
+a,
+.card {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Card elevation classes */
+.card-level-1 {
+  box-shadow: var(--shadow-sm);
+}
+
+.card-level-2 {
+  box-shadow: var(--shadow-md);
+}
+
+.card-level-3 {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Hover elevation */
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Gradient backgrounds */
+.gradient-blue {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, var(--color-purple) 0%, var(--color-purple-dark) 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+}
+
+.gradient-danger {
+  background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
+}

@@ -1,0 +1,333 @@
+Starting script execution...
+Imported pypdf successfully
+
+--- READING FILE: C:\Users\tranq\Downloads\AutoScaling.pdf ---
+Logic Scale Up/Scale Down
+1 Logic AutoScaling
+AutoScaling không scale pod trực tiếp, mà thông qua điều chỉnh số replica mong muốn
+trong ReplicaSet:
+• Scale up → tăng replica → tạo pod mới
+• Scale down → giảm replica → xóa pod
+Thực hiện Scale up khi:
+podt+1 < podt
+Thực hiện Scale down khi:
+podt+1 > podt
+1.1 Hysteresis, cooldown trong logic scale
+Hysteresis rule yêu càu scale up ở ngưỡng thấp và phản ứng nhanh, ngược lại với scale
+down yêu cầu phản ứng chậm
+Cooldown xác định metric phản ánh tác động: chờ metric phản ứng tác động, tránh
+hiệu tượng flapping (scale up/down liên tục)
+Trong một số trường hợp: phải đưa về reactive scaling dựa trên các metric xuất hiện
+thật bên trong (CPU, RPS)
+1.2 Hành vi hệ thống
+Hành vi scale up nhằm bảo vệ SLO → các chỉ số tính toán toán học sẽ bám vào SLO
+(error rate, tail latency)
+Hành vi Scale down nhằm tiết kiệm chi phí
+Lưu ý: Scale logic lựa chọn chính sách dựa trên rủi ro sự kiện.
+2 Tính toán replica/pod cần thiết
+Notation:
+• Rt: request rate tại thời điểm t
+• Rt+h: request rate dự báo
+• C capacity hiệu dụng tại 1 pod (RPS/pod)
+• k: hệ số buffer
+2.1 Xây dựng công thức tổng quát
+Ánh xạ từ nhu cầu → replica:
+replicaraw = ⌈ ˆRt+h/C⌉
+Công thức ám chỉ: mỗi pod chịu tối đa C RPS và số pod cần đủ thỏa mãn tổng capacity
+≥ nhu cầu
+1
+2.2 Ảnh hưởng từ forecast và tail-latency
+Số lượng replica mong muốn thực tế cần thêm hệ số buffer k nhằm tránh ảnh hưởng
+thiên lệch do heavy tail và sai số forecast sinh ra:
+replicaraw = ⌈replicaraw × (1 + k)⌉
+2.3 Trường hợp phải đưa về HPA mặc định
+Sử dụng lại các metric M về CPU, RPS/pod:
+replicadesired =
+⌈ Mcurrent
+Mtarget
+× replicacurrent
+⌉
+2.4 Những vấn đề của thiết kế:
+2.4.1 Capacity per pod C
+C dựa vào ngữ cảnh bảo vệ SLO để thiết kế, nên yêu cầu lấy throughput p99/p95 lượng
+tối thiểu vừa đủ:
+C = min{throughput | latency ≤ SLO}
+• C quá lớn → under-provision → latency spike
+• C quá nhỏ → over-provision → lãng phí
+2.4.2 Min/Max replicas
+Ta cần xác định ràng buộc:
+replicamin ≤ replicadesire ≤ replicamax
+• Xác định Min nhằm tránh scale về 0 hoặc 1, hiện tượng cold start
+• Xác định Max nhằm bảo vệ Cluster capacity
+2.4.3 Điều kiện để kích hoạt HPA
+Ta chỉ kích hoạt HPA khi forecase không còn đáng tin dưới một số điều kiện chuẩn sau:
+1.
+|yt − ˆyt|
+yt
+> ϵ
+• yt : workload thực
+• ˆyt forecast
+• ϵ : ngưỡng cho phép (5-15%)
+2. Dựa vào khoảng tin cậy của Prophet để thực hiện, nếu ngoài khoảng tin cậy này
+(ám chỉ regime shift hoặc spike) hệ thống sẽ được bật
+3. Bảo vệ SLO/SLA: dây là ràng buộc quan trọng.
+2
+2.4.4 Logic phát hiện anomaly/spike
+1. Residual nắm thông tin của anomaly và spike, ta thực hiện ngưỡng thiết lập rắn:
+|yt − ˆyt| > kσ residual
+Với k = 3 hoặc 5
+2. Tốc độ thay đổi (Volality)
+∆yt = yt − yt−1 > αmedian(∆y)
+3
+... [SKIPPING SOME CONTENT] ...
+Logic Scale Up/Scale Down
+1 Logic AutoScaling
+AutoScaling không scale pod trực tiếp, mà thông qua điều chỉnh số replica mong muốn
+trong ReplicaSet:
+• Scale up → tăng replica → tạo pod mới
+• Scale down → giảm replica → xóa pod
+Thực hiện Scale up khi:
+podt+1 < podt
+Thực hiện Scale down khi:
+podt+1 > podt
+1.1 Hysteresis, cooldown trong logic scale
+Hysteresis rule yêu càu scale up ở ngưỡng thấp và phản ứng nhanh, ngược lại với scale
+down yêu cầu phản ứng chậm
+Cooldown xác định metric phản ánh tác động: chờ metric phản ứng tác động, tránh
+hiệu tượng flapping (scale up/down liên tục)
+Trong một số trường hợp: phải đưa về reactive scaling dựa trên các metric xuất hiện
+thật bên trong (CPU, RPS)
+1.2 Hành vi hệ thống
+Hành vi scale up nhằm bảo vệ SLO → các chỉ số tính toán toán học sẽ bám vào SLO
+(error rate, tail latency)
+Hành vi Scale down nhằm tiết kiệm chi phí
+Lưu ý: Scale logic lựa chọn chính sách dựa trên rủi ro sự kiện.
+2 Tính toán replica/pod cần thiết
+Notation:
+• Rt: request rate tại thời điểm t
+• Rt+h: request rate dự báo
+• C capacity hiệu dụng tại 1 pod (RPS/pod)
+• k: hệ số buffer
+2.1 Xây dựng công thức tổng quát
+Ánh xạ từ nhu cầu → replica:
+replicaraw = ⌈ ˆRt+h/C⌉
+Công thức ám chỉ: mỗi pod chịu tối đa C RPS và số pod cần đủ thỏa mãn tổng capacity
+≥ nhu cầu
+1
+2.2 Ảnh hưởng từ forecast và tail-latency
+Số lượng replica mong muốn thực tế cần thêm hệ số buffer k nhằm tránh ảnh hưởng
+thiên lệch do heavy tail và sai số forecast sinh ra:
+replicaraw = ⌈replicaraw × (1 + k)⌉
+2.3 Trường hợp phải đưa về HPA mặc định
+Sử dụng lại các metric M về CPU, RPS/pod:
+replicadesired =
+⌈ Mcurrent
+Mtarget
+× replicacurrent
+⌉
+2.4 Những vấn đề của thiết kế:
+2.4.1 Capacity per pod C
+C dựa vào ngữ cảnh bảo vệ SLO để thiết kế, nên yêu cầu lấy throughput p99/p95 lượng
+tối thiểu vừa đủ:
+C = min{throughput | latency ≤ SLO}
+• C quá lớn → under-provision → latency spike
+• C quá nhỏ → over-provision → lãng phí
+2.4.2 Min/Max replicas
+Ta cần xác định ràng buộc:
+replicamin ≤ replicadesire ≤ replicamax
+• Xác định Min nhằm tránh scale về 0 hoặc 1, hiện tượng cold start
+• Xác định Max nhằm bảo vệ Cluster capacity
+2.4.3 Điều kiện để kích hoạt HPA
+Ta chỉ kích hoạt HPA khi forecase không còn đáng tin dưới một số điều kiện chuẩn sau:
+1.
+|yt − ˆyt|
+yt
+> ϵ
+• yt : workload thực
+• ˆyt forecast
+• ϵ : ngưỡng cho phép (5-15%)
+2. Dựa vào khoảng tin cậy của Prophet để thực hiện, nếu ngoài khoảng tin cậy này
+(ám chỉ regime shift hoặc spike) hệ thống sẽ được bật
+3. Bảo vệ SLO/SLA: dây là ràng buộc quan trọng.
+2
+2.4.4 Logic phát hiện anomaly/spike
+1. Residual nắm thông tin của anomaly và spike, ta thực hiện ngưỡng thiết lập rắn:
+|yt − ˆyt| > kσ residual
+Với k = 3 hoặc 5
+2. Tốc độ thay đổi (Volality)
+∆yt = yt − yt−1 > αmedian(∆y)
+3
+--- READING FILE: C:\Users\tranq\Downloads\fcomp-7-1509165.pdf ---
+Frontiers in Computer Science 01 frontiersin.org
+Time series forecasting-based
+Kubernetes autoscaling using
+Facebook Prophet and Long
+Short-Term Memory
+Pasan Bhanu Guruge 1* and Y.H.P.P. Priyadarshana 2
+1 College of Design, Creative and Digital Industries, University of Westminster, London,
+United Kingdom, 2 School of Computing, Informatics Institute of Technology, Colombo, Sri Lanka
+The advancement of cloud computing technologies has led to increased usage
+in application deployment in recent years. Kubernetes, a widely used container
+orchestration platform for deploying applications on cloud systems, provides
+benefits such as autoscaling to adapt to fluctuating workload while maintaining
+quality of service and availability. In this research, we designed and evaluated a
+proactive Kubernetes autoscaling using Facebook Prophet and Long Short-Term
+Memory (LSTM) hybrid model to predict the HTTP requests and calculate required
+pod counts based on the Monitor-Analyze-Plan-Execute loop. The proposed
+model not only captures seasonal data patterns effectively but also proactively
+predicts the pod requirements for timely and efficient resource allocation to
+reduce resource wastage while enhancing cloud computing applications. The
+proposed hybrid model was evaluated using real-world datasets from NASA
+and the Federation Internationale de Football Association (FIFA) World Cup to
+benchmark and compare with existing literature. Evaluation results indicate that
+the proposed novel hybrid model outperforms single-model proactive autoscaling
+by a maximum margin of 65–90% accuracy when compared to NASA and FIFA
+World Cup datasets. This study contributes to the fields of cloud computing and
+container orchestration by providing a refined proactive autoscaling mechanism
+that enhances application availability, efficient resource usage, and reduced costs
+and paves the way for further exploration in increased prediction speed, integrated
+with vertical scaling and implementations using Kubernetes.
+KEYWORDS
+Kubernetes, proactive autoscaling, LSTM, time-series forecasting, Facebook Prophet,
+Kubernetes autoscaling
+1 Introduction
+The advancement of cloud computing has fundamentally transformed the landscape of
+application development and deployment (Al-Dhuraibi et al., 2018). One core component of
+cloud computing is virtualization technology—often referred to as containerization and
+Kubernetes. Virtualization provides an abstraction layer to application deployment without
+coupling with underlying host devices, allowing application developers and infrastructure
+engineers to use the most suitable technology for the designed application ( Varghese and
+Buyya, 2018).
+The advancement of containerization technology allows for research and development
+in application development, deployment, and container orchestration platforms.
+Containerization enables developers to encapsulate the application and its dependencies
+into a single package that operates in a decoupled manner with the host machine
+OPEN ACCESS
+EDITED BY
+Kevin Lano,
+King’s College London, United Kingdom
+REVIEWED BY
+Rizwan Raheem Ahmed,
+Indus University, Pakistan
+Ersin Aytaç,
+Bülent Ecevit University, Türkiye
+Alireza Rouhi,
+Azarbaijan Shahid Madani University, Iran
+*CORRESPONDENCE
+Pasan Bhanu Guruge
+w1867877@my.westminster.ac.uk
+RECEIVED 10 October 2024
+ACCEPTED 29 January 2025
+PUBLISHED 19 February 2025
+CITATION
+Guruge PB and Priyadarshana YHPP (2025)
+Time series forecasting-based Kubernetes
+autoscaling using Facebook Prophet and
+Long Short-Term Memory.
+Front. Comput. Sci. 7:1509165.
+doi: 10.3389/fcomp.2025.1509165
+COPYRIGHT
+© 2025 Guruge and Priyadarshana. This is an
+open-access article distributed under the
+terms of the Creative Commons Attribution
+License (CC BY). The use, distribution or
+reproduction in other forums is permitted,
+provided the original author(s) and the
+copyright owner(s) are credited and that the
+original publication in this journal is cited, in
+accordance with accepted academic
+practice. No use, distribution or reproduction
+is permitted which does not comply with
+these terms.
+TYPE Original Research
+PUBLISHED 19 February 2025
+DOI 10.3389/fcomp.2025.1509165
+Guruge and Priyadarshana 10.3389/fcomp.2025.1509165
+Frontiers in Computer Science 02 frontiersin.org
+(Hardikar et  al., 2021 ). The introduction of microservice
+architecture has significantly improved the ability to use
+containerization and Kubernetes deployment in
+cloud environments.
+Initially developed as an open-source project, Kubernetes is a
+technology that abstracts away the underlying infrastructure of the
+deployment. The advancements in cloud computing allow engineers
+to focus away from resources and move to application-centric
+deployments and management. Kubernetes introduced the concepts
+of state management and autoscaling, making the applications highly
+available and reliable in large-scale deployments (Shah and Dubaria,
+2019). Kubernetes allows the deployment of different workloads and
+combines mult
+... [SKIPPING SOME CONTENT] ...
+ker and Kubernetes. ” 2021
+second international conference on electronics and sustainable communication systems
+(ICESC) [Preprint].
+Hochreiter, S., and Schmidhuber, J. (1996). LSTM can solve hard long time lag
+problems. Neural Inform. Proc. Syst. 9, 473–479.
+Ibryam, B., and Huß, R. (2023). Kubernetes patterns: Reusable elements for designing
+cloud-native applications. California, USA: O’Reilly Media.
+Imdoukh, M., Ahmad, I., and Alfailakawi, M. G. (2019). Machine learning-based
+auto-scaling for containerized applications. Neural Comput. & Applic. 32, 9745–9760.
+doi: 10.1007/s00521-019-04507-z
+Kothari, A., Kulkarni, A., Kohade, T., and Pawar, C. (2024). Stock market prediction
+using LSTM. Lect. Notes Networks Syst. 143–164. doi: 10.1007/978-981-97-1326-4_13
+Kubernetes Documentation (2024). Available at: https://kubernetes.io/docs/home/
+(Accessed August 28, 2024).
+Marie-Magdelaine, N., and Ahmed, T. (2020). “Proactive autoscaling for cloud-native
+applications using machine learning. ” GLOBECOM 2020–2020 IEEE Global
+Communications Conference [Preprint].
+Megino, F . H. B., Albert, J. R., Berghaus, F ., De, K., Lin, F ., MacDonell, D., et al. (2020).
+Using Kubernetes as an ATLAS computing site. EPJ Web Conf.  245:07025. doi:
+10.1051/epjconf/202024507025
+Messias, V . R., Estrella, J. C., Ehlers, R., Santana, M. J., Santana, R. C., and
+Reiff-Marganiec, S. (2015). Combining time series prediction models using genetic
+algorithm to autoscaling web applications hosted in the cloud infrastructure. Neural
+Comput. & Applic. 27, 2383–2406. doi: 10.1007/s00521-015-2133-3
+NASA-HTTP (1995). Available at: https://ita.ee.lbl.gov/html/contrib/NASA-HTTP .
+html (Accessed September 1, 2024).
+Pahl, C., and Lee, B. (2015). “Containers and clusters for edge cloud architectures -- a
+technology review. ” in 2015 3rd International Conference on Future Internet of Things
+and Cloud [Preprint].
+Pascanu, R., Mikolov, T., and Bengio, Y . (2012). On the difficulty of training recurrent
+neural networks. arXiv (Cornell University) [preprint].
+Podolskiy, V ., Jindal, A., Gerndt, M., and Oleynik, Y . (2018). Forecasting models for
+self-adaptive cloud applications: A comparative study: in 2018 IEEE 12th International
+Conference on Self-Adaptive and Self-Organizing Systems [Preprint].
+Prachitmutita, I., Aittinonmongkol, W ., Pojjanasuksakul, N., Supattatham, M., and
+Padungweang, P . (2018). “ Auto-scaling microservices on IAAS under SLA with cost-
+effective framework. ” 2018 Tenth International Conference on Advanced Computational
+Intelligence (ICACI) [Preprint].
+Roy, N., Dubey, A., and Gokhale, A. (2011). “Efficient autoscaling in the cloud using
+predictive models for workload forecasting. ” in 2011 IEEE 4th International Conference
+on Cloud Computing [Preprint].
+Shah, J., and Dubaria, D. (2019). “Building modern clouds: Using Docker, Kubernetes
+& Google Cloud Platform. ” in 2019 IEEE 9th Annual Computing and Communication
+Workshop and Conference (CCWC) [Preprint].
+Tang, X., Liu, Q., Dong, Y ., Han, J., and Zhang, Z. (2018). “Fisher: an efficient container
+load prediction model with deep neural network in clouds. ” in 2018 IEEE Intl Conf on
+parallel Distributed processing with applications, ubiquitous Comput- ing
+communications, big data cloud computing, social computing networking, sustainable
+computing communications (ISPA/IUCC/BDCloud/SocialCom/SustainCom).
+Melbourne, Australia, pp. 199–206.
+Taylor, S. J., and Letham, B. (2018). Forecasting at scale. Am. Stat. 72, 37–45. doi:
+10.1080/00031305.2017.1380080
+Toka, L., Dobreff, G., Fodor, B., and Sonkoly, B.. (2020). “ Adaptive AI-based auto-
+scaling for Kubernetes. ” in 2020 20th IEEE/ACM international symposium on cluster,
+Cloud and Internet Computing (CCGRID). pp. 599–608.
+Varghese, B., and Buyya, R. (2018). Next generation cloud computing: new trends and
+research directions. Futur. Gener. Comput. Syst.  79, 849–861. doi:
+10.1016/j.future.2017.09.020
+Wang, Z., and Gu, X. (2023). “ A time series prediction algorithm based on BiLSTM
+and prophet hybrid model. ” in 2023 4th International Conference on Computer
+Engineering and Application (ICCEA). pp. 128–132.
+Y an, M., Liang, X. M., Lu, Z. H., Wu, J., and Zhang, W . (2021). HANSEL: adaptive
+horizontal scaling of microservices using bi-LSTM. Appl. Soft Comput. 105:107216. doi:
+10.1016/j.asoc.2021.107216
+Y ang, D., Li, M., Guo, J. E., and du, P . (2024). An attention-based multi-input LSTM
+with sliding window-based two-stage decomposition for wind speed forecasting. Appl.
+Energy 375:124057. doi: 10.1016/j.apenergy.2024.124057
+Y e, T., Guangtao, X., Shiyou, Q., and Minglu, L. (2017). “ An auto-scaling framework
+for containerized elastic applications. ” in N Proceedings of the 2017 3rd International
+Conference on Big Data Computing and Communications (BIGCOM), pp. 422–430.
+Zhang, H., Jiang, G., Y oshihira, K., Chen, H., and Saxena, A. (2009). “Intelligent
+workload factoring for a hybrid cloud computing model. ” in 2009 Congress on Services -
+I[Preprint].
