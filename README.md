@@ -59,9 +59,9 @@ We experimented with:
 ---
 
 ## Results
-Evaluation metrics:
-- RMSE: 13.786
-- MAE: 10.397
+Evaluation metrics: (15 minutes)
+- RMSE: 116.118
+- MAE: 84.982
 
 Model performance shows ability to capture traffic trends and spikes.
 
