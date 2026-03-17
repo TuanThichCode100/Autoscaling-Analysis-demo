@@ -41,7 +41,7 @@ The system implements a proactive **Autoscaling** framework using the **MAPE** (
 * **Finite State Machine (FSM)**: Manages transitions between `STABLE`, `SCALING_UP`, `SCALING_DOWN`, and `PANIC` states.
 * **Proactive Formula**: Target replicas ($N_{raw}$) are calculated based on predicted traffic ($\hat{R}_{t+h}$):
   $$
-  N_{raw} = \lceil \frac{\hat{R}_{t+h}}{C} \times (1 + k) \rceil
+  N_{raw} = \left\lceil \frac{\hat{R}_{t+h}}{C} \times (1 + k) right\rceil
   $$
 * **Stability Controls**:
     * **Asymmetric Hysteresis**: Uses different thresholds for scaling up ($\delta_{up}$) and down ($\delta_{down}$) to prevent "flapping".
